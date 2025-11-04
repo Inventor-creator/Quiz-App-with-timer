@@ -1,4 +1,4 @@
-Java Mini Project 
+Java Mini Project in Swing AWT
 
 16014224076 Aryan Movalia
 16014224079 Pavithra Nair
@@ -8,4 +8,5 @@ Java Mini Project
 pre requisites: 
 	Java Swing 
 	postgresql
+
 	
