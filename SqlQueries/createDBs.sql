@@ -1,36 +1,41 @@
-
-CREATE TABLE Students(
-	studentId INTEGER,
-	PRIMARY KEY(studentId)
+CREATE TABLE students (
+    id SERIAL PRIMARY KEY,
+    studentname VARCHAR(100) UNIQUE NOT NULL
 );
 
-CREATE TABLE Quizzes(
-	quizId INTEGER,
-	quizName VARCHAR(20),
-	PRIMARY KEY(quizId)
+CREATE TABLE quizzes (
+    id SERIAL PRIMARY KEY,
+    quizname VARCHAR(100) UNIQUE NOT NULL
 );
 
-CREATE TABLE Questions(
-	questionId INTEGER,
-	quizId INTEGER,
-	FOREIGN KEY (quizId) REFERENCES Quizzes(quizId),
-	PRIMARY KEY (questionId)
-	
+CREATE TABLE questions (
+    id SERIAL PRIMARY KEY,
+    quiz_id INT REFERENCES quizzes(id) ON DELETE CASCADE,
+    question TEXT NOT NULL,
+    option_a TEXT NOT NULL,
+    option_b TEXT NOT NULL,
+    option_c TEXT NOT NULL,
+    option_d TEXT NOT NULL,
+    correct_option CHAR(1) NOT NULL
+);
+
+CREATE TABLE results (
+    id SERIAL PRIMARY KEY,
+    student_id INT REFERENCES students(id) ON DELETE CASCADE,
+    quiz_id INT REFERENCES quizzes(id) ON DELETE CASCADE,
+    score INT,
+    submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 
-CREATE TABLE StudentMarks(
-	studentId INTEGER,
-	quizId INTEGER,
-	FOREIGN KEY (quizId) REFERENCES Quizzes(quizId),
-	FOREIGN KEY (studentId) REFERENCES Students(studentId)
-);	
 
-
-
+DROP TABLE marks;
+DROP TABLE Questions;
 DROP TABLE Students;
 DROP TABLE Quizzes;
-DROP TABLE Questions;
-DROP TABLE StudentMarks;
 
+
+
+select * from students;
+select * from quizzes;
 
