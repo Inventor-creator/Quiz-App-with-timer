@@ -9,6 +9,7 @@ public class Question {
     private String c;
     private String d;
     private char correct;
+    private char userAnswer = '\0';
 
     public Question(int id, int quizId, String text,
                     String a, String b, String c, String d, char correct) {
@@ -54,6 +55,10 @@ public class Question {
         return correct;
     }
 
+    public char getUserAnswer() {
+        return userAnswer;
+    }
+
     public void setText(String text) {
         this.text = text;
     }
@@ -76,5 +81,9 @@ public class Question {
 
     public void setCorrect(char correct) {
         this.correct = correct;
+    }
+
+    public void setUserAnswer(char userAnswer) {
+        this.userAnswer = userAnswer;
     }
 }

@@ -16,11 +16,11 @@ public class AttemptQuizDialog extends JDialog {
     private final User student;
     private int current = 0;
     private int score = 0;
-
-    private JLabel qLabel;
-    private JLabel progressLbl;
+    private JLabel qLabel, progressLbl, timerLabel;
     private JRadioButton aBtn, bBtn, cBtn, dBtn;
     private ButtonGroup group;
+    private Timer countdownTimer;
+    private int timeRemaining = 120;
 
     public AttemptQuizDialog(JFrame owner, Quiz quiz, java.util.List<Question> questions, User student) {
         super(owner, "Attempt - " + quiz.getTitle(), true);
@@ -29,7 +29,8 @@ public class AttemptQuizDialog extends JDialog {
         this.student = student;
         initUI();
         loadQuestion();
-        setSize(700, 420);
+        startTimer();
+        setSize(740, 480);
         setLocationRelativeTo(owner);
     }
 
@@ -49,8 +50,17 @@ public class AttemptQuizDialog extends JDialog {
         progressLbl.setFont(new Font("SansSerif", Font.PLAIN, 14));
         progressLbl.setForeground(new Color(0xBBE1FA));
 
+        timerLabel = new JLabel(" ⏰ 02:00", SwingConstants.RIGHT);
+        timerLabel.setFont(new Font("SansSerif", Font.BOLD, 16));
+        timerLabel.setForeground(new Color(0xE74C3C));
+
+        JPanel topRight = new JPanel(new GridLayout(2, 1));
+        topRight.setBackground(new Color(0x0F4C75));
+        topRight.add(progressLbl);
+        topRight.add(timerLabel);
+
         top.add(title, BorderLayout.WEST);
-        top.add(progressLbl, BorderLayout.EAST);
+        top.add(topRight, BorderLayout.EAST);
         add(top, BorderLayout.NORTH);
 
         JPanel center = new JPanel(new BorderLayout(10, 10));
@@ -83,22 +93,33 @@ public class AttemptQuizDialog extends JDialog {
         opts.add(cBtn);
         opts.add(dBtn);
         center.add(opts, BorderLayout.CENTER);
-
         add(center, BorderLayout.CENTER);
 
-        JPanel bottom = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        bottom.setBackground(new Color(0x1B262C));
+        JPanel bottom = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 10));
+        bottom.setBackground(new Color(0x0F4C75));
         bottom.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
 
-        JButton next = createStyledButton("Next", new Color(0x0F4C75));
-        JButton finish = createStyledButton("Finish", new Color(0x3282B8));
+        JButton prev = createStyledButton("⬅ Previous", new Color(0x3282B8));
+        JButton next = createStyledButton("Next ➜", new Color(0x0F4C75));
+        JButton finish = createStyledButton("✔ Finish", new Color(0x1B262C));
 
+        bottom.add(prev);
         bottom.add(next);
         bottom.add(finish);
         add(bottom, BorderLayout.SOUTH);
 
+        prev.addActionListener(e -> {
+            saveCurrentSelection();
+            if (current > 0) {
+                current--;
+                loadQuestion();
+            } else {
+                showInfo("You're already on the first question.");
+            }
+        });
+
         next.addActionListener(e -> {
-            if (!checkSelectedAndScore()) {
+            if (!saveCurrentSelection()) {
                 showInfo("Please select an answer before continuing.");
                 return;
             }
@@ -111,12 +132,34 @@ public class AttemptQuizDialog extends JDialog {
         });
 
         finish.addActionListener(e -> {
-            if (!checkSelectedAndScore()) {
+            if (!saveCurrentSelection()) {
                 showInfo("Please select an answer before finishing.");
                 return;
             }
             finishQuiz();
         });
+    }
+
+    private void startTimer() {
+        countdownTimer = new Timer(1000, e -> {
+            timeRemaining--;
+            int minutes = timeRemaining / 60;
+            int seconds = timeRemaining % 60;
+            timerLabel.setText(String.format(" ⏰ %02d:%02d", minutes, seconds));
+
+            if (timeRemaining <= 10) timerLabel.setForeground(Color.RED);
+
+            if (timeRemaining <= 0) {
+                ((Timer) e.getSource()).stop();
+                showCustomDialog(
+                        "⏰ Time’s Up!",
+                        "Time’s up! Your quiz will be submitted automatically.",
+                        new Color(0xE67E22)
+                );
+                finishQuiz();
+            }
+        });
+        countdownTimer.start();
     }
 
     private JRadioButton createStyledRadioButton() {
@@ -127,15 +170,9 @@ public class AttemptQuizDialog extends JDialog {
         btn.setFocusPainted(false);
         btn.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-
         btn.addMouseListener(new MouseAdapter() {
-            public void mouseEntered(MouseEvent e) {
-                btn.setBackground(new Color(0xD4E9FA));
-            }
-
-            public void mouseExited(MouseEvent e) {
-                btn.setBackground(new Color(0xE1F0FA));
-            }
+            public void mouseEntered(MouseEvent e) { btn.setBackground(new Color(0xD4E9FA)); }
+            public void mouseExited(MouseEvent e) { btn.setBackground(new Color(0xE1F0FA)); }
         });
         return btn;
     }
@@ -148,15 +185,9 @@ public class AttemptQuizDialog extends JDialog {
         btn.setFocusPainted(false);
         btn.setBorder(BorderFactory.createEmptyBorder(8, 18, 8, 18));
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-
         btn.addMouseListener(new MouseAdapter() {
-            public void mouseEntered(MouseEvent e) {
-                btn.setBackground(bg.brighter());
-            }
-
-            public void mouseExited(MouseEvent e) {
-                btn.setBackground(bg);
-            }
+            public void mouseEntered(MouseEvent e) { btn.setBackground(bg.brighter()); }
+            public void mouseExited(MouseEvent e) { btn.setBackground(bg); }
         });
         return btn;
     }
@@ -170,25 +201,34 @@ public class AttemptQuizDialog extends JDialog {
         bBtn.setText("B. " + safe(q.getB()));
         cBtn.setText("C. " + safe(q.getC()));
         dBtn.setText("D. " + safe(q.getD()));
+
         group.clearSelection();
+        if (q.getUserAnswer() == 'A') aBtn.setSelected(true);
+        if (q.getUserAnswer() == 'B') bBtn.setSelected(true);
+        if (q.getUserAnswer() == 'C') cBtn.setSelected(true);
+        if (q.getUserAnswer() == 'D') dBtn.setSelected(true);
     }
 
-    private String safe(String s) {
-        return s == null ? "" : s;
-    }
+    private String safe(String s) { return s == null ? "" : s; }
 
-    private boolean checkSelectedAndScore() {
+    private boolean saveCurrentSelection() {
         Question q = questions.get(current);
         char selected = ' ';
         if (aBtn.isSelected()) selected = 'A';
         if (bBtn.isSelected()) selected = 'B';
         if (cBtn.isSelected()) selected = 'C';
         if (dBtn.isSelected()) selected = 'D';
-        if (selected == q.getCorrect()) score++;
-        return selected != ' ';
+        if (selected == ' ') return false;
+        q.setUserAnswer(selected);
+        return true;
     }
 
     private void finishQuiz() {
+        if (countdownTimer != null) countdownTimer.stop();
+        score = 0;
+        for (Question q : questions) {
+            if (q.getUserAnswer() == q.getCorrect()) score++;
+        }
         showSuccess("You completed the quiz!\nScore: " + score + "/" + questions.size());
         saveAndClose();
     }
@@ -197,23 +237,15 @@ public class AttemptQuizDialog extends JDialog {
         try {
             DBUtil.saveAttempt(student.getId(), quiz.getId(), score, questions.size());
         } catch (Exception ex) {
-            showError(" Failed to save attempt: " + ex.getMessage());
+            showError("Failed to save attempt: " + ex.getMessage());
             ex.printStackTrace();
         }
         dispose();
     }
 
-    private void showSuccess(String msg) {
-        showCustomDialog("Success", msg, new Color(0x00BCD4));
-    }
-
-    private void showError(String msg) {
-        showCustomDialog("Error", msg, new Color(0xE74C3C));
-    }
-
-    private void showInfo(String msg) {
-        showCustomDialog("Notice", msg, new Color(0x3282B8));
-    }
+    private void showSuccess(String msg) { showCustomDialog("Success", msg, new Color(0x00BCD4)); }
+    private void showError(String msg) { showCustomDialog("Error", msg, new Color(0xE74C3C)); }
+    private void showInfo(String msg) { showCustomDialog("Notice", msg, new Color(0x3282B8)); }
 
     private void showCustomDialog(String title, String message, Color accentColor) {
         JDialog dialog = new JDialog(this, title, true);
