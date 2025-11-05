@@ -7,8 +7,7 @@ public class Main {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             try {
-                // Initialize DB (will create tables if missing)
-                DBUtil.init("jdbc:postgresql://localhost:5432/JavaMiniProj ", "postgres", "postgres");
+                DBUtil.init("jdbc:postgresql://localhost:5432/javaminiproj", "postgres", "postgres");
                 DBUtil.initTables();
             } catch (Exception ex) {
                 ex.printStackTrace();
@@ -16,10 +15,12 @@ public class Main {
                 System.exit(1);
             }
 
-            JFrame frame = new JFrame("Quiz App");
+            JFrame frame = new JFrame("The Quiz App");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             frame.setSize(900, 600);
             frame.setLocationRelativeTo(null);
+            ImageIcon icon = new ImageIcon("src/MiniProj/assest/q.png");
+            frame.setIconImage(icon.getImage());
             frame.setContentPane(new LoginFrame(frame));
             frame.setVisible(true);
         });

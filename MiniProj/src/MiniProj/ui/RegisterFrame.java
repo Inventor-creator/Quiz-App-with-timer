@@ -8,11 +8,10 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.sql.SQLException;
 
-public class LoginFrame extends JPanel {
+public class RegisterFrame extends JPanel {
     private JFrame parent;
-    private JPasswordField passField;
 
-    public LoginFrame(JFrame parent) {
+    public RegisterFrame(JFrame parent) {
         this.parent = parent;
         initUI();
     }
@@ -39,16 +38,14 @@ public class LoginFrame extends JPanel {
 
         JPanel form = new JPanel(new GridBagLayout());
         form.setBackground(new Color(0xBBE1FA));
-        form.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(0x0F4C75), 2, true),
-                BorderFactory.createEmptyBorder(25, 40, 25, 40)
-        ));
+        form.setBorder(BorderFactory.createEmptyBorder(25, 40, 25, 40));
+        form.setPreferredSize(new Dimension(420, 380));
 
         GridBagConstraints c = new GridBagConstraints();
         c.insets = new Insets(10, 10, 10, 10);
         c.fill = GridBagConstraints.HORIZONTAL;
 
-        JLabel title = new JLabel("Welcome to The Quiz App");
+        JLabel title = new JLabel("Create Your Account");
         title.setFont(new Font("SansSerif", Font.BOLD, 22));
         title.setHorizontalAlignment(SwingConstants.CENTER);
         title.setForeground(new Color(0x0F4C75));
@@ -57,93 +54,73 @@ public class LoginFrame extends JPanel {
 
         JLabel userLbl = new JLabel("Username:");
         JTextField userField = createStyledTextField();
-
-        JLabel roleLbl = new JLabel("Role:");
-        JComboBox<String> roleCombo = createStyledComboBox(new String[]{"student", "instructor"});
-
-        JLabel passLbl = new JLabel("Password:");
-        passField = createStyledPasswordField();
-
         styleLabel(userLbl);
-        styleLabel(roleLbl);
-        styleLabel(passLbl);
 
         c.gridwidth = 1;
         c.gridx = 0; c.gridy = 1; form.add(userLbl, c);
         c.gridx = 1; form.add(userField, c);
+
+        JLabel roleLbl = new JLabel("Role:");
+        JComboBox<String> roleCombo = createStyledComboBox(new String[]{"student", "instructor"});
+        styleLabel(roleLbl);
         c.gridx = 0; c.gridy = 2; form.add(roleLbl, c);
         c.gridx = 1; form.add(roleCombo, c);
+
+        JLabel passLbl = new JLabel("Password:");
+        JPasswordField passField = createStyledPasswordField();
+        styleLabel(passLbl);
         c.gridx = 0; c.gridy = 3; form.add(passLbl, c);
         c.gridx = 1; form.add(passField, c);
 
-        JButton loginBtn = new JButton("Login");
-        loginBtn.setFont(new Font("SansSerif", Font.BOLD, 16));
-        loginBtn.setBackground(new Color(0x0F4C75));
-        loginBtn.setForeground(Color.WHITE);
-        loginBtn.setFocusPainted(false);
-        loginBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        loginBtn.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
-        loginBtn.setOpaque(true);
-
-        loginBtn.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                loginBtn.setBackground(new Color(0x3282B8));
-            }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                loginBtn.setBackground(new Color(0x0F4C75));
-            }
-        });
-
+        JButton registerBtn = new JButton("Register");
+        stylePrimaryButton(registerBtn);
         c.gridx = 0; c.gridy = 4; c.gridwidth = 2;
-        form.add(loginBtn, c);
+        form.add(registerBtn, c);
 
-        JLabel registerLink = new JLabel("<html><u>Don't have an account? Register here</u></html>");
-        registerLink.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        registerLink.setHorizontalAlignment(SwingConstants.CENTER);
-        registerLink.setForeground(new Color(0x0F4C75));
-        registerLink.setFont(new Font("SansSerif", Font.BOLD, 14));
+        JLabel backLink = new JLabel("<html><u>Already have an account? Login here</u></html>");
+        backLink.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        backLink.setHorizontalAlignment(SwingConstants.CENTER);
+        backLink.setForeground(new Color(0x0F4C75));
+        backLink.setFont(new Font("SansSerif", Font.BOLD, 14));
+        c.gridy = 5;
+        form.add(backLink, c);
 
-        registerLink.addMouseListener(new java.awt.event.MouseAdapter() {
+        gradientBg.add(form);
+
+        backLink.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent evt) {
-                registerLink.setForeground(new Color(0x3282B8));
+                backLink.setForeground(new Color(0x3282B8));
             }
+
             public void mouseExited(java.awt.event.MouseEvent evt) {
-                registerLink.setForeground(new Color(0x0F4C75));
+                backLink.setForeground(new Color(0x0F4C75));
             }
+
             public void mouseClicked(java.awt.event.MouseEvent evt) {
-                parent.setContentPane(new RegisterFrame(parent));
+                parent.setContentPane(new LoginFrame(parent));
                 parent.revalidate();
                 parent.repaint();
             }
         });
 
-        c.gridy = 5;
-        form.add(registerLink, c);
-
-        gradientBg.add(form);
-
-        loginBtn.addActionListener(e -> {
+        registerBtn.addActionListener(e -> {
             String username = userField.getText().trim();
             String password = new String(passField.getPassword()).trim();
             String role = (String) roleCombo.getSelectedItem();
 
             if (username.isEmpty() || password.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Enter both username and password.");
+                DialogUtil.showError(this, "Please fill in all fields.");
                 return;
             }
 
             try {
-                User u = DBUtil.validateLogin(username, password, role);
-                DialogUtil.showSuccess(this, "Welcome " + u.getUsername() + "!");
-                if (role.equals("student")) {
-                    parent.setContentPane(new StudentDashboard(parent, u));
-                } else {
-                    parent.setContentPane(new InstructorDashboard(parent, u));
-                }
+                User u = DBUtil.registerUser(username, password, role);
+                DialogUtil.showSuccess(this, "Account created successfully!");
+                parent.setContentPane(new LoginFrame(parent));
                 parent.revalidate();
                 parent.repaint();
             } catch (SQLException ex) {
-                DialogUtil.showError(this, "Login failed: " + ex.getMessage());
+                DialogUtil.showError(this, "Registration failed: " + ex.getMessage());
             }
         });
     }
@@ -163,6 +140,7 @@ public class LoginFrame extends JPanel {
             public void focusGained(FocusEvent e) {
                 field.setBorder(BorderFactory.createLineBorder(new Color(0x3282B8), 2, true));
             }
+
             public void focusLost(FocusEvent e) {
                 field.setBorder(BorderFactory.createLineBorder(new Color(0x0F4C75), 1, true));
             }
@@ -185,6 +163,7 @@ public class LoginFrame extends JPanel {
             public void focusGained(FocusEvent e) {
                 field.setBorder(BorderFactory.createLineBorder(new Color(0x3282B8), 2, true));
             }
+
             public void focusLost(FocusEvent e) {
                 field.setBorder(BorderFactory.createLineBorder(new Color(0x0F4C75), 1, true));
             }
@@ -200,21 +179,40 @@ public class LoginFrame extends JPanel {
         combo.setBorder(BorderFactory.createLineBorder(new Color(0x0F4C75), 1, true));
         combo.setFocusable(false);
         combo.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-
         combo.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent evt) {
                 combo.setBorder(BorderFactory.createLineBorder(new Color(0x3282B8), 2, true));
             }
+
             public void mouseExited(java.awt.event.MouseEvent evt) {
                 combo.setBorder(BorderFactory.createLineBorder(new Color(0x0F4C75), 1, true));
             }
         });
-
         return combo;
     }
 
     private void styleLabel(JLabel label) {
         label.setFont(new Font("SansSerif", Font.PLAIN, 15));
         label.setForeground(new Color(0x0F4C75));
+    }
+
+    private void stylePrimaryButton(JButton btn) {
+        btn.setFont(new Font("SansSerif", Font.BOLD, 16));
+        btn.setBackground(new Color(0x0F4C75));
+        btn.setForeground(Color.WHITE);
+        btn.setFocusPainted(false);
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btn.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+        btn.setOpaque(true);
+
+        btn.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                btn.setBackground(new Color(0x3282B8));
+            }
+
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                btn.setBackground(new Color(0x0F4C75));
+            }
+        });
     }
 }

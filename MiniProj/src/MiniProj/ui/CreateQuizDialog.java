@@ -1,78 +1,168 @@
 package MiniProj.ui;
 
-import MiniProj.models.User;
 import MiniProj.DBUtil;
+import MiniProj.models.User;
+
 import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.sql.SQLException;
 
 public class CreateQuizDialog extends JDialog {
-    private User instructor;
     private JTextField titleField;
     private JTextArea descArea;
-    private DefaultTableModel qModel;
+    private User instructor;
 
     public CreateQuizDialog(JFrame owner, User instructor) {
-        super(owner, "Create Quiz", true);
+        super(owner, "Create New Quiz", true);
         this.instructor = instructor;
         initUI();
-        setSize(800,500);
+        pack();
+        setMinimumSize(new Dimension(420, 340));
         setLocationRelativeTo(owner);
     }
 
     private void initUI() {
-        setLayout(new BorderLayout(8,8));
-        JPanel top = new JPanel(new GridLayout(2,1));
-        titleField = new JTextField();
-        descArea = new JTextArea(3,40);
-        top.add(new JLabel("Title:")); top.add(titleField);
-        add(top, BorderLayout.NORTH);
-        add(new JScrollPane(descArea), BorderLayout.CENTER);
+        setLayout(new BorderLayout(12, 12));
+        getContentPane().setBackground(new Color(0x1B262C));
+        setResizable(false);
 
-        String[] cols = {"Question", "A", "B", "C", "D", "Correct (A/B/C/D)"};
-        qModel = new DefaultTableModel(cols, 0);
-        JTable table = new JTable(qModel);
-        add(new JScrollPane(table), BorderLayout.WEST);
+        JLabel header = new JLabel("Create New Quiz");
+        header.setFont(new Font("SansSerif", Font.BOLD, 22));
+        header.setHorizontalAlignment(SwingConstants.CENTER);
+        header.setForeground(new Color(0xBBE1FA));
+        header.setBorder(BorderFactory.createEmptyBorder(12, 8, 8, 8));
+        add(header, BorderLayout.NORTH);
 
-        JPanel right = new JPanel(new GridLayout(5,1,8,8));
-        JButton addRow = new JButton("Add Question Row");
-        JButton removeRow = new JButton("Remove Selected Row");
-        JButton save = new JButton("Save Quiz");
-        JButton cancel = new JButton("Cancel");
-        right.add(addRow); right.add(removeRow); right.add(save); right.add(cancel);
-        add(right, BorderLayout.EAST);
+        JPanel form = new JPanel(new GridBagLayout());
+        form.setBackground(new Color(0xBBE1FA));
+        form.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(0x0F4C75), 2, true),
+                BorderFactory.createEmptyBorder(16, 20, 16, 20)
+        ));
+        add(form, BorderLayout.CENTER);
 
-        addRow.addActionListener(e -> qModel.addRow(new Object[]{"","","","","",""}));
-        removeRow.addActionListener(e -> {
-            int r = table.getSelectedRow();
-            if (r >= 0) qModel.removeRow(r);
-        });
+        GridBagConstraints c = new GridBagConstraints();
+        c.insets = new Insets(10, 10, 10, 10);
+        c.anchor = GridBagConstraints.NORTHWEST;
 
-        cancel.addActionListener(e -> dispose());
+        JLabel titleLbl = new JLabel("Quiz Title:");
+        titleLbl.setFont(new Font("SansSerif", Font.PLAIN, 16));
+        titleLbl.setForeground(new Color(0x0F4C75));
+        c.gridx = 0; c.gridy = 0;
+        c.gridwidth = 1;
+        c.weightx = 0;
+        c.fill = GridBagConstraints.NONE;
+        form.add(titleLbl, c);
 
-        save.addActionListener(e -> {
-            String title = titleField.getText().trim();
-            String desc = descArea.getText().trim();
-            if (title.isEmpty()) { JOptionPane.showMessageDialog(this, "Title required"); return; }
-            if (qModel.getRowCount() == 0) { JOptionPane.showMessageDialog(this, "Add at least one question"); return; }
-            try {
-                int quizId = DBUtil.createQuiz(title, desc, instructor.id);
-                for (int i = 0; i < qModel.getRowCount(); ++i) {
-                    String question = (String)(qModel.getValueAt(i,0) == null ? "" : qModel.getValueAt(i,0));
-                    String a = (String)(qModel.getValueAt(i,1) == null ? "" : qModel.getValueAt(i,1));
-                    String b = (String)(qModel.getValueAt(i,2) == null ? "" : qModel.getValueAt(i,2));
-                    String c = (String)(qModel.getValueAt(i,3) == null ? "" : qModel.getValueAt(i,3));
-                    String d = (String)(qModel.getValueAt(i,4) == null ? "" : qModel.getValueAt(i,4));
-                    String corr = (String)(qModel.getValueAt(i,5) == null ? "" : qModel.getValueAt(i,5));
-                    if (question.trim().isEmpty()) continue;
-                    char correct = (corr.trim().isEmpty() ? ' ' : corr.trim().toUpperCase().charAt(0));
-                    DBUtil.addQuestion(quizId, question, a, b, c, d, correct);
-                }
-                JOptionPane.showMessageDialog(this, "Quiz saved successfully");
-                dispose();
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Failed to save quiz: " + ex.getMessage());
-                ex.printStackTrace();
+        titleField = createStyledTextField();
+        c.gridx = 1; c.gridy = 0;
+        c.weightx = 1.0;
+        c.fill = GridBagConstraints.HORIZONTAL;
+        form.add(titleField, c);
+
+        JLabel descLbl = new JLabel("Description:");
+        descLbl.setFont(new Font("SansSerif", Font.PLAIN, 16));
+        descLbl.setForeground(new Color(0x0F4C75));
+        c.gridx = 0; c.gridy = 1;
+        c.gridwidth = 1;
+        c.weightx = 0;
+        c.fill = GridBagConstraints.NONE;
+        form.add(descLbl, c);
+
+        descArea = createStyledTextArea();
+        JScrollPane descScroll = new JScrollPane(descArea);
+        descScroll.setBorder(BorderFactory.createLineBorder(new Color(0x0F4C75), 1, true));
+        descScroll.setPreferredSize(new Dimension(260, 120));
+
+        c.gridx = 1; c.gridy = 1;
+        c.gridwidth = 1;
+        c.weightx = 1.0;
+        c.weighty = 1.0;
+        c.fill = GridBagConstraints.BOTH;
+        form.add(descScroll, c);
+
+        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 8));
+        buttons.setBackground(new Color(0x1B262C));
+
+        JButton cancelBtn = new JButton("Cancel");
+        JButton createBtn = new JButton("Create Quiz");
+        stylePrimaryButton(cancelBtn, new Color(0x3282B8), Color.WHITE);
+        stylePrimaryButton(createBtn, new Color(0x0F4C75), Color.WHITE);
+
+        buttons.add(cancelBtn);
+        buttons.add(createBtn);
+        add(buttons, BorderLayout.SOUTH);
+
+        cancelBtn.addActionListener(e -> dispose());
+        createBtn.addActionListener(e -> onCreate());
+    }
+
+    private void onCreate() {
+        String title = titleField.getText().trim();
+        String desc = descArea.getText().trim();
+
+        if (title.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please enter a quiz title.");
+            return;
+        }
+
+        try {
+            int quizId = DBUtil.createQuiz(title, desc, instructor.getId());
+            JOptionPane.showMessageDialog(this,
+                    "Quiz created successfully! ID: " + quizId,
+                    "Success",
+                    JOptionPane.INFORMATION_MESSAGE);
+            dispose();
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this,
+                    "Failed to create quiz: " + ex.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            ex.printStackTrace();
+        }
+    }
+
+    private JTextField createStyledTextField() {
+        JTextField field = new JTextField(22);
+        field.setBackground(new Color(0xE1F0FA));
+        field.setForeground(new Color(0x1B262C));
+        field.setCaretColor(new Color(0x0F4C75));
+        field.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        field.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(0x0F4C75), 1, true),
+                BorderFactory.createEmptyBorder(6, 10, 6, 10)
+        ));
+        return field;
+    }
+
+    private JTextArea createStyledTextArea() {
+        JTextArea area = new JTextArea();
+        area.setRows(6);
+        area.setColumns(26);
+        area.setBackground(new Color(0xE1F0FA));
+        area.setForeground(new Color(0x1B262C));
+        area.setCaretColor(new Color(0x0F4C75));
+        area.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        area.setLineWrap(true);
+        area.setWrapStyleWord(true);
+        area.setBorder(BorderFactory.createEmptyBorder(6, 8, 6, 8));
+        return area;
+    }
+
+    private void stylePrimaryButton(JButton btn, Color bg, Color fg) {
+        btn.setFont(new Font("SansSerif", Font.BOLD, 13));
+        btn.setBackground(bg);
+        btn.setForeground(fg);
+        btn.setFocusPainted(false);
+        btn.setBorder(BorderFactory.createEmptyBorder(8, 18, 8, 18));
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+        btn.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                btn.setBackground(bg.brighter());
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                btn.setBackground(bg);
             }
         });
     }
