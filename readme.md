@@ -1,10 +1,10 @@
 # The Quiz App 
-### Java Mini Project
+### Java Mini Project - Quiz App with timer
 
 ---
 
-## Team Members
-| Member ID | Name |
+## Team Members Batch-D3 (AI/DS)
+| Roll No | Name |
 |------------|------|
 | 16014224076 |Aryan Movalia |
 | 16014224079 |Pavithra Nair |
