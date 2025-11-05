@@ -35,7 +35,7 @@
 | Category | Tools / Libraries |
 |-----------|-------------------|
 | Language | **Java 17+** |
-| GUI Framework | **Swing ** |
+| GUI Framework | **Swing** |
 | Database | **PostgreSQL** |
 | JDBC | **PostgreSQL JDBC Driver (org.postgresql.Driver)** |
 
