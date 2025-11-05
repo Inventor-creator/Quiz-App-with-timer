@@ -25,7 +25,8 @@
 <img width="1100" height="732" alt="image" src="https://github.com/user-attachments/assets/74e728c3-903f-49cf-a097-c0a7182c97a5" />
 
 ## Quiz
-<img width="1095" height="736" alt="image" src="https://github.com/user-attachments/assets/835e73d9-ad8a-404e-a2e9-043e671bb994" />
+<img width="1103" height="737" alt="image" src="https://github.com/user-attachments/assets/b4fdafb6-4d71-46e4-8bf5-a57ff07bae11" />
+
 
 
 
